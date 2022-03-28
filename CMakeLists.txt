@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.22)
 
 # Source files
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
-add_executable(${PROJECT_NAME} ${SRC_DIR}/BasicApp.cpp)
+add_executable(${PROJECT_NAME} ${SRC_DIR}/CinderApp.cpp src/HexGrid.cpp src/HexGrid.h)
 
 # Dependencies
 target_include_directories(${PROJECT_NAME}
@@ -22,3 +22,9 @@ include("${CINDER_PATH}/proj/cmake/configure.cmake")
 # ${CINDER_LIB_DIRECTORY} will be pulled in from the above configure.cmake file.
 find_package(cinder REQUIRED PATHS "${CINDER_PATH}/${CINDER_LIB_DIRECTORY}")
 target_link_libraries(${PROJECT_NAME} PUBLIC cinder)
+
+# glm
+find_package(glm REQUIRED)
+include_directories(${GLM_INCLUDE_DIRS})
+link_directories(${GLM_LIBRARY_DIRS})
+add_definitions(${GLM_DEFINITIONS})
