@@ -6,35 +6,43 @@
 #define CINDERTEST_HEXGRID_H
 
 #include "cinder/Vector.h"
+#include <map>
+
+
+struct KeyFuncs
+{
+    size_t operator()(const glm::ivec3& k)const
+    {
+        return std::hash<int>()(k.x) ^ std::hash<int>()(k.y) ^ std::hash<int>()(k.z);
+    }
+
+    bool operator()(const glm::ivec3& a, const glm::ivec3& b)const
+    {
+        return a.x == b.x && a.y == b.y && a.z == b.z;
+    }
+};
 
 template <typename T>
-
 class HexGrid
 {
 public:
 
-    explicit HexGrid(int radius);
+    explicit HexGrid();
 
-    void setHexagon(glm::ivec3 pos, T hex);
-    void setHexagon(int q, int r, int s, T hex);
-    T getHexagon(glm::ivec3 pos);
-    T getHexagon(int q, int r, int s);
-
+    void setCell(glm::ivec3 pos, T hex);
+    void setCell(int x, int y, int z, T hex);
+    T getCell(glm::ivec3 pos);
+    T getCell(int x, int y, int z);
+    bool hasCell(glm::ivec3 pos);
 
 private:
-    int tSize, rSize, sSize;
-    int totalHexagons;
-    T* hexagons;
+    std::unordered_map<glm::ivec3, T, KeyFuncs, KeyFuncs> hexagons;
 
-    bool isValidPosition(int q, int r, int s);
+    void assertValidPosition(glm::ivec3 pos);
 
-    int calcIndex(glm::ivec3 pos);
-    int calcIndex(int r, int s, int t);
-
-    bool verifyPosition(int r, int s, int t);
+    bool isPositionValid(glm::ivec3 pos);
 };
 
-template class HexGrid<int>;
 template class HexGrid<glm::vec3>;
 
 #endif //CINDERTEST_HEXGRID_H

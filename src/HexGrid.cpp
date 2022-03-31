@@ -5,66 +5,56 @@
 #include "HexGrid.h"
 
 template<typename T>
-HexGrid<T>::HexGrid(int radius)
+HexGrid<T>::HexGrid()
 {
-    rSize = radius;
-    sSize = radius;
-    tSize = radius;
-    this->totalHexagons = 1 + 6 * radius;
-    this->hexagons = new T[totalHexagons];
 }
 
 template<typename T>
-void HexGrid<T>::setHexagon(glm::ivec3 pos, T hex)
+void HexGrid<T>::setCell(glm::ivec3 pos, T hex)
 {
-    setHexagon(pos.r, pos.s, pos.t, hex);
+    assertValidPosition(pos);
+    hexagons[pos] = hex;
 }
 
 template<typename T>
-void HexGrid<T>::setHexagon(int r, int s, int t, T hex)
+void HexGrid<T>::setCell(int x, int y, int z, T hex)
 {
-    verifyPosition(r, s, t);
+    setCell(glm::ivec3(x, y, z), hex);
 
-    hexagons[calcIndex(r, s, t)] = hex;
 }
 
 template<typename T>
-T HexGrid<T>::getHexagon(glm::ivec3 pos)
+T HexGrid<T>::getCell(glm::ivec3 pos)
 {
-    return getHexagon(pos.r, pos.s, pos.t);
+    assertValidPosition(pos);
+
+    return hexagons[pos];
 }
 
 template<typename T>
-T HexGrid<T>::getHexagon(int r, int s, int t)
+T HexGrid<T>::getCell(int x, int y, int z)
 {
-    verifyPosition(r, s, t);
-
-    return hexagons[calcIndex(r, s, t)];
+    return getCell(glm::ivec3(x, y, z));
 }
 
 template<typename T>
-bool HexGrid<T>::verifyPosition(int r, int s, int t)
+bool HexGrid<T>::hasCell(glm::ivec3 pos)
 {
-    if (!isValidPosition(r, s, t)) {
-        std::cerr << "Position does not exist";
-        throw 1;
+    return hexagons.count(pos) != 0;
+}
+
+template<typename T>
+bool HexGrid<T>::isPositionValid(glm::ivec3 pos)
+{
+   return pos.x + pos.y + pos.z == 0;
+}
+
+template<typename T>
+void HexGrid<T>::assertValidPosition(glm::ivec3 pos)
+{
+    if (!isPositionValid(pos))
+    {
+        std::cerr << "Invalid position" << std::endl;
+        exit(1);
     }
-}
-
-template<typename T>
-bool HexGrid<T>::isValidPosition(int r, int s, int t)
-{
-   return r + s + t == 0;
-}
-
-template<typename T>
-int HexGrid<T>::calcIndex(glm::ivec3 pos)
-{
-    return calcIndex(pos.r, pos.s, pos.t);
-}
-
-template<typename T>
- int HexGrid<T>::calcIndex(int r, int s, int t)
-{
-    return (r + s * 2 + t * 4) % totalHexagons;
 }
