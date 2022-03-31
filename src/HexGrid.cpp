@@ -58,3 +58,14 @@ void HexGrid<T>::assertValidPosition(glm::ivec3 pos)
         exit(1);
     }
 }
+template<typename T>
+typename std::unordered_map<glm::ivec3 , T>::iterator HexGrid<T>::begin()
+{
+    return hexagons.begin();
+}
+
+template<typename T>
+typename std::unordered_map<glm::ivec3 , T>::iterator HexGrid<T>::end()
+{
+    return hexagons.end();
+}

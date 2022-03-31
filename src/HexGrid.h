@@ -6,6 +6,7 @@
 #define CINDERTEST_HEXGRID_H
 
 #include "cinder/Vector.h"
+#include "BrainNode.h"
 #include <map>
 
 
@@ -35,6 +36,10 @@ public:
     T getCell(int x, int y, int z);
     bool hasCell(glm::ivec3 pos);
 
+    typename std::unordered_map<glm::ivec3, T>::iterator end();
+
+    typename std::unordered_map<glm::ivec3, T>::iterator begin();
+
 private:
     std::unordered_map<glm::ivec3, T, KeyFuncs, KeyFuncs> hexagons;
 
@@ -43,6 +48,6 @@ private:
     bool isPositionValid(glm::ivec3 pos);
 };
 
-template class HexGrid<glm::vec3>;
+template class HexGrid<BrainNode>;
 
 #endif //CINDERTEST_HEXGRID_H

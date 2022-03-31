@@ -3,6 +3,7 @@
 #include "cinder/gl/gl.h"
 #include "HexGrid.h"
 #include "cinder/Rand.h"
+#include "BrainNode.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -23,12 +24,12 @@ public:
 
 private:
 
-    HexGrid<glm::vec3> grid = HexGrid<glm::vec3>();
+    HexGrid<BrainNode> grid = HexGrid<BrainNode>();
 
     vec2 toWindowPos(vec2 position);
 
     vec2 windowSize;
-    int hexTiles = 10;
+    int hexTiles = 200;
     float hexRadius = .15f / hexTiles;
     float height = 2 * hexRadius * 3 / 4.0f;
 
@@ -44,10 +45,17 @@ void CinderApp::setup()
     for (int i = 0; i < 30; i++)
     {
         ivec3 pos = glm::ivec3();
-        pos.x = randInt(-hexTiles, hexTiles + 1);
-        pos.y = randInt(-hexTiles, hexTiles + 1);
-        pos.z = -pos.x - pos.y;
-        grid.setCell(pos, glm::vec3(randFloat(1.0f), randFloat(1.0f), randFloat(1.0f)));
+        do {
+            pos.x = randInt(-hexTiles, hexTiles + 1);
+            pos.y = randInt(-hexTiles, hexTiles + 1);
+            pos.z = -pos.x - pos.y;
+        } while (abs(pos.z) > hexTiles);
+
+        BrainNode node;
+        node.pos = pos;
+        node.color = glm::vec3(randFloat(1.0f), randFloat(1.0f), randFloat(1.0f));
+
+        grid.setCell(pos, node);
     }
 }
 
@@ -76,10 +84,17 @@ void CinderApp::keyDown(KeyEvent event)
         for (int i = 0; i < 30; i++)
         {
             ivec3 pos = glm::ivec3();
-            pos.x = randInt(-hexTiles, hexTiles + 1);
-            pos.y = randInt(-hexTiles, hexTiles + 1);
-            pos.z = -pos.x - pos.y;
-            grid.setCell(pos, glm::vec3(randFloat(1.0f), randFloat(1.0f), randFloat(1.0f)));
+            do {
+                pos.x = randInt(-hexTiles, hexTiles + 1);
+                pos.y = randInt(-hexTiles, hexTiles + 1);
+                pos.z = -pos.x - pos.y;
+            } while (abs(pos.z) > hexTiles);
+
+            BrainNode node;
+            node.pos = pos;
+            node.color = glm::vec3(randFloat(1.0f), randFloat(1.0f), randFloat(1.0f));
+
+            grid.setCell(pos, node);
         }
     }
 }
@@ -92,21 +107,13 @@ void CinderApp::draw()
     gl::begin(GL_TRIANGLES);
     {
 
-        // TODO: Replace loop with iteration over hexgrid
-        for (int r = -hexTiles; r <= hexTiles; r++)
+        for (std::pair<glm::ivec3, BrainNode> b : grid)
         {
-            for (int s = -hexTiles; s <= hexTiles; s++)
-            {
-                for (int t = -hexTiles; t <= hexTiles; t++)
-                {
-                    if (r + s + t != 0) continue;
-                    if (!grid.hasCell(glm::ivec3(r, s, t))) continue;
-
-                    glm::vec3 color = grid.getCell(r, s, t);
+                    glm::vec3 color = b.second.color;
 
                     gl::color(color.r, color.g, color.b);
 
-                    glm::vec2 pos = rDir * glm::vec2(r) + sDir * glm::vec2(s) + tDir * glm::vec2(t);
+                    glm::vec2 pos = rDir * glm::vec2(b.first.x) + sDir * glm::vec2(b.first.y) + tDir * glm::vec2(b.first.z);
 
                     gl::vertex(toWindowPos(pos));
                     gl::vertex(toWindowPos(pos + rDir));
@@ -131,8 +138,6 @@ void CinderApp::draw()
                     gl::vertex(toWindowPos(pos));
                     gl::vertex(toWindowPos(pos - sDir));
                     gl::vertex(toWindowPos(pos + rDir));
-                }
-            }
         }
     }
     gl::end();
