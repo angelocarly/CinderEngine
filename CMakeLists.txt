@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.22)
 
 # Source files
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
-add_executable(${PROJECT_NAME} ${SRC_DIR}/CinderApp.cpp src/HexGrid.cpp src/HexGrid.h src/BrainNode.h src/HexField.cpp src/HexField.h)
+add_executable(${PROJECT_NAME} ${SRC_DIR}/CinderApp.cpp src/HexGrid.cpp src/HexGrid.h src/BrainNode.h src/HexField.cpp src/HexField.h src/GridUtils.h)
 
 # Dependencies
 target_include_directories(${PROJECT_NAME}
@@ -28,3 +28,7 @@ find_package(glm REQUIRED)
 include_directories(${GLM_INCLUDE_DIRS})
 link_directories(${GLM_LIBRARY_DIRS})
 add_definitions(${GLM_DEFINITIONS})
+
+# spdlog
+find_package(spdlog REQUIRED)
+target_link_libraries(${PROJECT_NAME} PUBLIC spdlog::spdlog)

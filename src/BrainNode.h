@@ -11,6 +11,7 @@ struct BrainNode
 {
     glm::ivec3 pos;
     glm::vec3 color;
+    int depth;
     std::vector<glm::ivec3> children;
 };
 
