@@ -6,7 +6,7 @@
 #define CINDERTEST_GRIDUTILS_H
 
 #include "cinder/Vector.h"
-#include "HexField.h"
+#include "SymmetryOperation.h"
 
 class GridUtils
 {

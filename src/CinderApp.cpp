@@ -19,7 +19,11 @@ public:
 
     void mouseDrag(MouseEvent event) override;
 
+    void mouseMove(MouseEvent event) override;
+
     void mouseDown(MouseEvent event) override;
+
+    void mouseWheel(MouseEvent event) override;
 
     void keyDown(KeyEvent event) override;
 
@@ -27,14 +31,14 @@ public:
 
 private:
 
-    HexGrid<BrainNode> grid = HexGrid<BrainNode>();
+    HexField hexField;
 
     vec2 toWindowPos(vec2 position);
 
     vec2 windowSize;
 
     vec2 mousePosition;
-    vec2 cameraPosition;
+    vec2 cameraPosition = glm::vec2(0.5f, 0.5f);
 
     int hexTiles = 90;
     float diameter = 1.0f / hexTiles;
@@ -55,17 +59,18 @@ private:
     void fillRandomHexagon();
 
     vec3 colorGradient(float value);
+
+    void setHexSizes(int hexesOnScreen) {
+        this->hexTiles = hexesOnScreen;
+        this->diameter = 1.0f / hexesOnScreen;
+        this->hexRadius = diameter / sqrt(3);
+
+        rDir = hexToScreenMatrixPointyTop * glm::vec2(1, 0) * glm::vec2(hexRadius);
+        sDir = hexToScreenMatrixPointyTop * glm::vec2(0, -1) * glm::vec2(hexRadius);
+        tDir = hexToScreenMatrixPointyTop * glm::vec2(-1, 1) * glm::vec2(hexRadius);
+    }
 };
 
-glm::vec3 CinderApp::colorGradient(float value) {
-//    Position = 0.0     Color = (  0,   7, 100)
-//    Position = 0.16    Color = ( 32, 107, 203)
-//    Position = 0.42    Color = (237, 255, 255)
-//    Position = 0.6425  Color = (255, 170,   0)
-//    Position = 0.8575  Color = (  0,   2,   0)
-    float col = value * value * 0.8;
-    return glm::vec3(col + 0.04, col + 0.02, col + 0.0);
-}
 
 void CinderApp::setup() {
     windowSize = vec2(getWindowWidth(), getWindowHeight());
@@ -74,87 +79,8 @@ void CinderApp::setup() {
 //        fillRandomHexagon();
 //    }
 
-    SymmetryOperation triangle = GridUtils::createTriangle(glm::ivec3(2, -3, 1));
-    SymmetryOperation hexagon = GridUtils::createHexagon(glm::ivec3(2, -3, 1));
-    SymmetryOperation hexagon1 = GridUtils::createHexagon(glm::ivec3(4, -4, 0));
-    SymmetryOperation lineup = GridUtils::createLine(glm::ivec3(0, 1, -1));
-    SymmetryOperation lineright = GridUtils::createLine(glm::ivec3(0, -5, 5));
-    SymmetryOperation triangleUp = GridUtils::createTriangleUp(glm::ivec3(3, -3, 0));
 
-    triangleUp.setAllChilds(&lineup);
-    lineup.setChild(0, &triangleUp);
-    lineup.setChild(1, &lineright);
-    triangle.setChild(0, &lineright);
-    triangle.setChild(1, &hexagon);
-    triangle.setChild(2, &lineright);
-    hexagon.setAllChilds(&triangle);
-    lineright.setAllChilds(&triangleUp);
-    hexagon1.setAllChilds(&lineup);
-
-    std::vector<glm::mat4> transformStack = std::vector<glm::mat4>();
-    std::vector<SymmetryOperation *> operationStack;
-    std::vector<int> childIndexStack;
-    std::vector<bool> validOverWrites;
-
-    // Start the depth search with the first node, starting with first child
-    int depth = 0;
-    int max_depth = 15;
-    int child = 0;
-    SymmetryOperation *op = &hexagon;
-    glm::mat4 tr = glm::mat4();
-    do {
-
-        if (depth < 4) {
-            spdlog::info("Calculating child {} on depth {}", child, depth);
-        }
-
-        int childCellsPlaced = 0;
-        for (int c = 0; c < op->getChildSize(); c++) {
-            glm::vec3 pos = tr * op->getChildTransform(c) * glm::vec4(0, 0, 0, 1);
-            if (!grid.hasCell(pos) || grid.getCell(pos).depth >= depth + 1) {
-                grid.setCell(pos, {pos, colorGradient((float) depth / max_depth), depth + 1});
-
-                childCellsPlaced++;
-            }
-        }
-
-        // Try to traverse the current child
-        if (op->getChildSize() < 3 || childCellsPlaced > 2) {
-            if (child < op->getChildSize() && op->getSymmetryOperation(child) != nullptr && depth < max_depth) {
-                // Push parent state
-                transformStack.push_back(tr);
-                operationStack.push_back(op);
-                childIndexStack.push_back(child + 1);
-
-                // Set argument for the child
-                tr = tr * op->getChildTransform(child);
-                op = op->getSymmetryOperation(child);
-                child = 0;
-                depth++;
-                continue;
-
-            } else if (child + 1 < op->getChildSize() && op->getSymmetryOperation(child) == nullptr) {
-
-                // There's more children to traverse
-                glm::vec3 pos = tr * op->getChildTransform(child) * glm::vec4(0, 0, 0, 1);
-                child++;
-                continue;
-            }
-        }
-
-        // Go to parent
-        depth--;
-
-        // pop parent state
-        child = childIndexStack.back();
-        op = operationStack.back();
-        tr = transformStack.back();
-        childIndexStack.pop_back();
-        operationStack.pop_back();
-        transformStack.pop_back();
-        continue;
-
-    } while (depth >= 0);
+//    hexField.calculateGrid();
 
     spdlog::info("Setup completed");
 
@@ -162,50 +88,62 @@ void CinderApp::setup() {
 
 void prepareSettings(CinderApp::Settings *settings) {
     settings->setTitle("cinder");
-    settings->setWindowSize(1200, 1200);
+    settings->setWindowSize(1600, 1600);
     settings->setMultiTouchEnabled(false);
 }
 
+void CinderApp::mouseMove(MouseEvent event) {
+    mousePosition = event.getPos();
+}
+
 void CinderApp::mouseDown(MouseEvent event) {
-    glm::vec2 mousePos = glm::vec2(event.getPos()) / windowSize - glm::vec2(0.5f, 0.5f);
+    glm::vec2 mousePos = glm::vec2(event.getPos()) / windowSize - glm::vec2(1.f);
 
     BrainNode node;
-    node.pos = screenPosToHexPos(mousePos);
-    node.color = glm::vec3(randFloat(1.0f), randFloat(1.0f), randFloat(1.0f));
+    node.pos = screenPosToHexPos(mousePos + glm::vec2(cameraPosition.x, cameraPosition.y));
+//    node.color = glm::vec3(randFloat(1.0f), randFloat(1.0f), randFloat(1.0f));
+    node.color = glm::vec3(0.9f);
 
-    grid.setCell(node.pos, node);
+    hexField.getHexGrid().setCell(node.pos, node);
 }
 
 
 void CinderApp::mouseDrag(MouseEvent event) {
-    glm::vec2 distance = event.getPos() / getWindowSize();
+    glm::vec2 distance = (mousePosition - glm::vec2(event.getPos())) / windowSize;
     cameraPosition += distance;
-    spdlog::info(event.getPos().x);
-    spdlog::info(cameraPosition.x);
+    mousePosition = event.getPos();
+}
+
+void CinderApp::mouseWheel(MouseEvent event) {
+    setHexSizes(hexTiles - event.getWheelIncrement());
 }
 
 void CinderApp::keyDown(KeyEvent event) {
     if (event.getChar() == 'a') {
+        hexField.calculateNextDepth();
         for (int i = 0; i < 30; i++) {
-            fillRandomHexagon();
+//            fillRandomHexagon();
         }
     }
 }
 
 void CinderApp::draw() {
-    gl::clear(Color::gray(0.06f));
+    gl::clear(Color(.02f, 0.02f, 0.05f) * 2.7f);
 
-    gl::translate(cameraPosition);
+    gl::pushModelMatrix();
+    gl::translate(toWindowPos(-cameraPosition));
 
     gl::begin(GL_TRIANGLES);
     {
 
-        for (std::pair<glm::ivec3, BrainNode> b: grid) {
+        for (std::pair<glm::ivec3, BrainNode> b: hexField.getHexGrid()) {
             glm::vec3 color = b.second.color;
 
             gl::color(color.r, color.g, color.b);
 
-            glm::vec2 pos = hexToScreenMatrix * glm::vec2(b.first.x, b.first.y) * glm::vec2(diameter);
+            glm::mat4 rot60 = GridUtils::rotateSixthRight();
+            glm::ivec3 hexpos = GridUtils::transform(rot60 * rot60, b.first);
+            glm::vec2 pos = hexToScreenMatrix * glm::vec2(hexpos.x, hexpos.y) * glm::vec2(diameter);
 
             gl::vertex(toWindowPos(pos));
             gl::vertex(toWindowPos(pos + rDir));
@@ -233,26 +171,11 @@ void CinderApp::draw() {
         }
     }
     gl::end();
+    gl::popModelMatrix();
 }
 
 glm::vec2 CinderApp::toWindowPos(glm::vec2 position) {
     return position * windowSize + windowSize / glm::vec2(2);
-}
-
-void CinderApp::fillRandomHexagon() {
-    ivec3 pos = glm::ivec3();
-    do {
-        pos.x = randInt(-hexTiles, hexTiles + 1);
-        pos.y = randInt(-hexTiles, hexTiles + 1);
-        pos.z = -pos.x - pos.y;
-    } while (abs(pos.z) > hexTiles);
-
-    BrainNode node;
-    node.pos = pos;
-    node.color = glm::vec3(randFloat(1.0f), randFloat(1.0f), randFloat(1.0f));
-    node.color = glm::vec3(0, 0, 0);
-
-    grid.setCell(pos, node);
 }
 
 glm::ivec3 CinderApp::screenPosToHexPos(glm::vec2 position) {
@@ -260,9 +183,9 @@ glm::ivec3 CinderApp::screenPosToHexPos(glm::vec2 position) {
     glm::vec2 posInHexSpace = glm::inverse(hexToScreenMatrix) * (position / glm::vec2(diameter));
 
     glm::vec3 newPos;
-    newPos.x = posInHexSpace.x;
-    newPos.y = posInHexSpace.y;
-    newPos.z = -posInHexSpace.x - posInHexSpace.y;
+    newPos.x = -posInHexSpace.x - posInHexSpace.y;
+    newPos.y = posInHexSpace.x;
+    newPos.z = posInHexSpace.y;
 
     // How much does the position deviate from a unit coord?
     glm::vec3 roundDelta;

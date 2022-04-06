@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.22)
 
 # Source files
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
-add_executable(${PROJECT_NAME} ${SRC_DIR}/CinderApp.cpp src/HexGrid.cpp src/HexGrid.h src/BrainNode.h src/HexField.cpp src/HexField.h src/GridUtils.h)
+add_executable(${PROJECT_NAME} ${SRC_DIR}/CinderApp.cpp src/HexGrid.cpp src/HexGrid.h src/BrainNode.h src/HexField.cpp src/HexField.h src/GridUtils.h src/SymmetryOperation.h)
 
 # Dependencies
 target_include_directories(${PROJECT_NAME}
