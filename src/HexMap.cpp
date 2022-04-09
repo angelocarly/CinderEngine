@@ -2,29 +2,29 @@
 // Created by magnias on 3/22/22.
 //
 
-#include "HexGrid.h"
+#include "HexMap.h"
 
 template<typename T>
-HexGrid<T>::HexGrid()
+HexMap<T>::HexMap()
 {
 }
 
 template<typename T>
-void HexGrid<T>::setCell(glm::ivec3 pos, T hex)
+void HexMap<T>::setCell(glm::ivec3 pos, T hex)
 {
     assertValidPosition(pos);
     hexagons[pos] = hex;
 }
 
 template<typename T>
-void HexGrid<T>::setCell(int x, int y, int z, T hex)
+void HexMap<T>::setCell(int x, int y, int z, T hex)
 {
     setCell(glm::ivec3(x, y, z), hex);
 
 }
 
 template<typename T>
-T HexGrid<T>::getCell(glm::ivec3 pos)
+T HexMap<T>::getCell(glm::ivec3 pos)
 {
     assertValidPosition(pos);
 
@@ -32,25 +32,25 @@ T HexGrid<T>::getCell(glm::ivec3 pos)
 }
 
 template<typename T>
-T HexGrid<T>::getCell(int x, int y, int z)
+T HexMap<T>::getCell(int x, int y, int z)
 {
     return getCell(glm::ivec3(x, y, z));
 }
 
 template<typename T>
-bool HexGrid<T>::hasCell(glm::ivec3 pos)
+bool HexMap<T>::hasCell(glm::ivec3 pos)
 {
     return hexagons.count(pos) != 0;
 }
 
 template<typename T>
-bool HexGrid<T>::isPositionValid(glm::ivec3 pos)
+bool HexMap<T>::isPositionValid(glm::ivec3 pos)
 {
    return pos.x + pos.y + pos.z == 0;
 }
 
 template<typename T>
-void HexGrid<T>::assertValidPosition(glm::ivec3 pos)
+void HexMap<T>::assertValidPosition(glm::ivec3 pos)
 {
     if (!isPositionValid(pos))
     {
@@ -59,13 +59,13 @@ void HexGrid<T>::assertValidPosition(glm::ivec3 pos)
     }
 }
 template<typename T>
-typename std::unordered_map<glm::ivec3 , T>::iterator HexGrid<T>::begin()
+typename std::unordered_map<glm::ivec3 , T>::iterator HexMap<T>::begin()
 {
     return hexagons.begin();
 }
 
 template<typename T>
-typename std::unordered_map<glm::ivec3 , T>::iterator HexGrid<T>::end()
+typename std::unordered_map<glm::ivec3 , T>::iterator HexMap<T>::end()
 {
     return hexagons.end();
 }

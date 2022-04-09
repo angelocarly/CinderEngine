@@ -33,9 +33,10 @@ public:
     {
         glm::mat4 translationUp = GridUtils::createTranslationMatrix(pos);
         glm::mat4 rot30 = GridUtils::rotateThirdRight();
+        glm::mat4 rot60 = GridUtils::rotateSixthRight();
         return SymmetryOperation(
                 {translationUp, rot30 * translationUp, rot30 * rot30 * translationUp,
-                 glm::inverse(translationUp), rot30 * glm::inverse(translationUp), rot30 * rot30 * glm::inverse(translationUp)}
+                 rot60 * translationUp, rot60 * rot30 * translationUp, rot60 * rot30 * rot30 * translationUp}
         );
     }
 
@@ -72,11 +73,6 @@ public:
                 0, 0, 1, 0,
                 1, 0, 0, 0,
                 0, 0, 0, 1);
-    }
-
-    static glm::vec3 transform(glm::mat4 transform, glm::ivec3 position)
-    {
-        return transform * glm::ivec4(position.x, position.y, position.z, 1.0f);
     }
 };
 

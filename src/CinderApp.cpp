@@ -1,10 +1,7 @@
 #include "cinder/app/App.h"
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
-#include "HexGrid.h"
-#include "GridUtils.h"
-#include "cinder/Rand.h"
-#include "BrainNode.h"
+#include "HexNode.h"
 #include "HexField.h"
 #include <spdlog/spdlog.h>
 #include <stack>
@@ -54,11 +51,7 @@ private:
     glm::vec2 sDir = hexToScreenMatrixPointyTop * glm::vec2(0, -1) * glm::vec2(hexRadius);
     glm::vec2 tDir = hexToScreenMatrixPointyTop * glm::vec2(-1, 1) * glm::vec2(hexRadius);
 
-    ivec3 screenPosToHexPos(vec2 position);
-
-    void fillRandomHexagon();
-
-    vec3 colorGradient(float value);
+    ivec3 screenPosToHexCoord(vec2 position);
 
     void setHexSizes(int hexesOnScreen) {
         this->hexTiles = hexesOnScreen;
@@ -74,21 +67,11 @@ private:
 
 void CinderApp::setup() {
     windowSize = vec2(getWindowWidth(), getWindowHeight());
-
-//    for (int i = 0; i < 30; i++) {
-//        fillRandomHexagon();
-//    }
-
-
-//    hexField.calculateGrid();
-
-    spdlog::info("Setup completed");
-
 }
 
 void prepareSettings(CinderApp::Settings *settings) {
     settings->setTitle("cinder");
-    settings->setWindowSize(1600, 1600);
+    settings->setWindowSize(900, 900);
     settings->setMultiTouchEnabled(false);
 }
 
@@ -99,8 +82,8 @@ void CinderApp::mouseMove(MouseEvent event) {
 void CinderApp::mouseDown(MouseEvent event) {
     glm::vec2 mousePos = glm::vec2(event.getPos()) / windowSize - glm::vec2(1.f);
 
-    BrainNode node;
-    node.pos = screenPosToHexPos(mousePos + glm::vec2(cameraPosition.x, cameraPosition.y));
+    HexNode node;
+    node.pos = screenPosToHexCoord(mousePos + glm::vec2(cameraPosition.x, cameraPosition.y));
 //    node.color = glm::vec3(randFloat(1.0f), randFloat(1.0f), randFloat(1.0f));
     node.color = glm::vec3(0.9f);
 
@@ -121,9 +104,6 @@ void CinderApp::mouseWheel(MouseEvent event) {
 void CinderApp::keyDown(KeyEvent event) {
     if (event.getChar() == 'a') {
         hexField.calculateNextDepth();
-        for (int i = 0; i < 30; i++) {
-//            fillRandomHexagon();
-        }
     }
 }
 
@@ -136,14 +116,13 @@ void CinderApp::draw() {
     gl::begin(GL_TRIANGLES);
     {
 
-        for (std::pair<glm::ivec3, BrainNode> b: hexField.getHexGrid()) {
+        for (std::pair<glm::ivec3, HexNode> b: hexField.getHexGrid()) {
             glm::vec3 color = b.second.color;
+            glm::ivec3 hexpos = b.second.pos;
 
             gl::color(color.r, color.g, color.b);
 
-            glm::mat4 rot60 = GridUtils::rotateSixthRight();
-            glm::ivec3 hexpos = GridUtils::transform(rot60 * rot60, b.first);
-            glm::vec2 pos = hexToScreenMatrix * glm::vec2(hexpos.x, hexpos.y) * glm::vec2(diameter);
+            glm::vec2 pos = hexToScreenMatrix * hexpos * glm::vec2(diameter);
 
             gl::vertex(toWindowPos(pos));
             gl::vertex(toWindowPos(pos + rDir));
@@ -178,7 +157,7 @@ glm::vec2 CinderApp::toWindowPos(glm::vec2 position) {
     return position * windowSize + windowSize / glm::vec2(2);
 }
 
-glm::ivec3 CinderApp::screenPosToHexPos(glm::vec2 position) {
+glm::ivec3 CinderApp::screenPosToHexCoord(glm::vec2 position) {
 
     glm::vec2 posInHexSpace = glm::inverse(hexToScreenMatrix) * (position / glm::vec2(diameter));
 

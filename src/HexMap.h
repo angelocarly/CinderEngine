@@ -2,15 +2,15 @@
 // Created by magnias on 3/22/22.
 //
 
-#ifndef CINDERTEST_HEXGRID_H
-#define CINDERTEST_HEXGRID_H
+#ifndef CINDERTEST_HEXMAP_H
+#define CINDERTEST_HEXMAP_H
 
 #include "cinder/Vector.h"
-#include "BrainNode.h"
+#include "HexNode.h"
 #include <map>
 
 
-struct KeyFuncs
+struct ivec3HashFuncs
 {
     size_t operator()(const glm::ivec3& k)const
     {
@@ -24,11 +24,11 @@ struct KeyFuncs
 };
 
 template <typename T>
-class HexGrid
+class HexMap
 {
 public:
 
-    explicit HexGrid();
+    explicit HexMap();
 
     void setCell(glm::ivec3 pos, T hex);
     void setCell(int x, int y, int z, T hex);
@@ -41,13 +41,13 @@ public:
     typename std::unordered_map<glm::ivec3, T>::iterator begin();
 
 private:
-    std::unordered_map<glm::ivec3, T, KeyFuncs, KeyFuncs> hexagons;
+    std::unordered_map<glm::ivec3, T, ivec3HashFuncs, ivec3HashFuncs> hexagons;
 
     void assertValidPosition(glm::ivec3 pos);
 
     bool isPositionValid(glm::ivec3 pos);
 };
 
-template class HexGrid<BrainNode>;
+template class HexMap<HexNode>;
 
-#endif //CINDERTEST_HEXGRID_H
+#endif //CINDERTEST_HEXMAP_H
