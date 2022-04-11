@@ -6,17 +6,26 @@
 #define CINDERTEST_SYMMETRYOPERATION_H
 
 #include <spdlog/spdlog.h>
+
+#include <utility>
 #include "cinder/Vector.h"
 
 class SymmetryOperation {
 public:
-    explicit SymmetryOperation(std::vector<glm::mat4> childTransforms)
-            : _childTransforms(childTransforms) {
-        _symmetryOperations.resize(childTransforms.size());
+    SymmetryOperation(const std::vector<glm::mat4>& childTransforms, const std::vector<SymmetryOperation*>& symmetryOperations)
+            : childTransforms(childTransforms), symmetryOperations(symmetryOperations) {
+        if (childTransforms.size() != symmetryOperations.size()) {
+            spdlog::error("Failed initializing SymmetryOperation because of mismatching size. childtransform.size: {}, symmetryOperations.size: {}",
+                          childTransforms.size(), symmetryOperations.size());
+        }
+    }
+
+    SymmetryOperation() {
+
     }
 
     int getChildSize() {
-        return _childTransforms.size();
+        return childTransforms.size();
     }
 
     glm::mat4 getChildTransform(int child) {
@@ -24,7 +33,7 @@ public:
             spdlog::error("Child not found: {}", child);
             std::exit(1);
         }
-        return _childTransforms.at(child);
+        return childTransforms.at(child);
     }
 
     SymmetryOperation *getSymmetryOperation(int child) {
@@ -32,7 +41,7 @@ public:
             spdlog::error("Child not found: {}", child);
             std::exit(1);
         }
-        return _symmetryOperations.at(child);
+        return symmetryOperations.at(child);
     }
 
     void setChild(int child, SymmetryOperation *operation) {
@@ -40,18 +49,19 @@ public:
             spdlog::error("Child not found: {}", child);
             std::exit(1);
         }
-        _symmetryOperations.at(child) = operation;
+        symmetryOperations.at(child) = operation;
     }
 
     void setAllChilds(SymmetryOperation * operation) {
-        for(int i=0; i<_symmetryOperations.size(); i++) {
-            _symmetryOperations.at(i) = operation;
+        for(int i=0; i < symmetryOperations.size(); i++) {
+            symmetryOperations.at(i) = operation;
         }
     }
 
+
 private:
-    std::vector<SymmetryOperation *> _symmetryOperations;
-    std::vector<glm::mat4> _childTransforms;
+    std::vector<SymmetryOperation *> symmetryOperations;
+    std::vector<glm::mat4> childTransforms;
 };
 
 #endif //CINDERTEST_SYMMETRYOPERATION_H

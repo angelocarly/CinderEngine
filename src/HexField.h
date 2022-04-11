@@ -17,6 +17,10 @@ class HexField
 public:
     HexField();
 
+    void addStructure(int index, const std::vector<glm::mat4>& childMatrices, const std::vector<int>& childIndices);
+    void addStructure(int index, const std::vector<glm::mat4>& childMatrices, int allChildIndices);
+    void addStructure(int index, const std::vector<glm::mat4>& childMatrices);
+
     void calculateNextDepth();
 
     void calculateGrid();
@@ -27,27 +31,30 @@ private:
 
     HexMap<HexNode> grid = HexMap<HexNode>();
 
-    SymmetryOperation triangle = GridUtils::createTriangle(glm::ivec3(3, -3, 0));
-    SymmetryOperation hexagon = GridUtils::createHexagon(glm::ivec3(1, 1, -2));
-    SymmetryOperation hexagon1 = GridUtils::createHexagon(glm::ivec3(4, -2, -2));
-    SymmetryOperation lineup = GridUtils::createLine(glm::ivec3(0, 7, -7));
-    SymmetryOperation lineup2 = GridUtils::createLine(glm::ivec3(2, 0, -2));
-    SymmetryOperation lineright = GridUtils::createLine(glm::ivec3(-7, 0, 7));
-    SymmetryOperation triangleUp = GridUtils::createTriangleUp(glm::ivec3(2, -2, 0));
-    SymmetryOperation triangleUp2 = GridUtils::createTriangleUp(glm::ivec3(3, -3, 0));
-    SymmetryOperation base = GridUtils::createHexagon(glm::ivec3(35, -35, -0));
-    SymmetryOperation base2 = GridUtils::createLine(glm::ivec3(-13, 13, 0));
-    SymmetryOperation base3 = GridUtils::createTriangleUp(glm::ivec3(2, -2, 0));
-    SymmetryOperation base4 = GridUtils::createTriangleUp(glm::ivec3(2, -2, 0));
+//    SymmetryOperation triangle = GridUtils::createTriangle(glm::ivec3(3, -3, 0));
+//    SymmetryOperation hexagon = GridUtils::createHexagon(glm::ivec3(1, 1, -2));
+//    SymmetryOperation hexagon1 = GridUtils::createHexagon(glm::ivec3(4, -2, -2));
+//    SymmetryOperation lineup = GridUtils::createLine(glm::ivec3(0, 7, -7));
+//    SymmetryOperation lineup2 = GridUtils::createLine(glm::ivec3(2, 0, -2));
+//    SymmetryOperation lineright = GridUtils::createLine(glm::ivec3(-7, 0, 7));
+//    SymmetryOperation triangleUp = GridUtils::createTriangleUp(glm::ivec3(2, -2, 0));
+//    SymmetryOperation triangleUp2 = GridUtils::createTriangleUp(glm::ivec3(3, -3, 0));
+//    SymmetryOperation base = GridUtils::createHexagon(glm::ivec3(35, -35, -0));
+//    SymmetryOperation base2 = GridUtils::createLine(glm::ivec3(-13, 13, 0));
+//    SymmetryOperation base3 = GridUtils::createTriangleUp(glm::ivec3(2, -2, 0));
+//    SymmetryOperation base4 = GridUtils::createTriangleUp(glm::ivec3(2, -2, 0));
 
     // Calculation data
-    std::vector<SymmetryOperation *> parentNodes = {&base};
+    std::vector<SymmetryOperation *> parentNodes = {};
     std::vector<glm::mat4> parentMatrices = {glm::mat4()};
     int max_depth = 18;
     int depth = 0;
+    std::vector<SymmetryOperation> symmetryStructure;
 
     glm::vec3 palette(float t, glm::vec3 a, glm::vec3 b, glm::vec3 c, glm::vec3 d);
     glm::vec3 colorGradient(int depth, int max_depth, int children);
+
+    std::vector<SymmetryOperation*> getSymmetryOperations(const std::vector<int>& indices);
 };
 
 

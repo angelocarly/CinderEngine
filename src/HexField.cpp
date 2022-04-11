@@ -4,39 +4,41 @@
 
 #include "HexField.h"
 
+#include <utility>
+
 HexField::HexField()
 {
-    base.setAllChilds(&base2);
-    base2.setAllChilds(&base4);
-    base3.setAllChilds(&triangle);
-    base4.setAllChilds(&base3);
-    lineright.setAllChilds(&lineup);
+//    base.setAllChilds(&base2);
+//    base2.setAllChilds(&base4);
+//    base3.setAllChilds(&triangle);
+//    base4.setAllChilds(&base3);
+//    lineright.setAllChilds(&lineup);
 //        lineright.setAllChilds(&triangle);
 //        hexagon1.setAllChilds(&hexagon);
 //        triangle.setChild(0, &triangle);
 //        triangle.setChild(1, &lineup);
 //    triangle.setChild(2, &lineright);
-    triangle.setAllChilds(&lineright);
-    lineup2.setChild(0, &triangle);
-    lineup2.setChild(1, &triangle);
-    lineup.setChild(0, &base4);
-    lineup.setChild(1, &triangleUp);
+//    triangle.setAllChilds(&lineright);
+//    lineup2.setChild(0, &triangle);
+//    lineup2.setChild(1, &triangle);
+//    lineup.setChild(0, &base4);
+//    lineup.setChild(1, &triangleUp);
 //    lineup.setChild(0, &hexagon1);
-    triangleUp.setChild(0, &lineup);
-    triangleUp.setChild(1, &lineup);
-    triangleUp.setChild(2, &lineup);
-    hexagon.setChild(0, &hexagon1);
-    hexagon.setChild(1, &hexagon1);
-    hexagon.setChild(2, &hexagon1);
-    hexagon.setChild(3, &triangle);
-    hexagon.setChild(4, &triangle);
-    hexagon.setChild(5, &triangle);
-    hexagon1.setChild(0, &lineright);
-    hexagon1.setChild(1, &lineright);
-    hexagon1.setChild(2, &lineright);
-    hexagon.setChild(3, &triangle);
-    hexagon.setChild(4, &lineup);
-    hexagon.setChild(5, &lineup);
+//    triangleUp.setChild(0, &lineup);
+//    triangleUp.setChild(1, &lineup);
+//    triangleUp.setChild(2, &lineup);
+//    hexagon.setChild(0, &hexagon1);
+//    hexagon.setChild(1, &hexagon1);
+//    hexagon.setChild(2, &hexagon1);
+//    hexagon.setChild(3, &triangle);
+//    hexagon.setChild(4, &triangle);
+//    hexagon.setChild(5, &triangle);
+//    hexagon1.setChild(0, &lineright);
+//    hexagon1.setChild(1, &lineright);
+//    hexagon1.setChild(2, &lineright);
+//    hexagon.setChild(3, &triangle);
+//    hexagon.setChild(4, &lineup);
+//    hexagon.setChild(5, &lineup);
 }
 
 glm::vec3 HexField::palette(float t, glm::vec3 a, glm::vec3 b, glm::vec3 c, glm::vec3 d)
@@ -60,12 +62,15 @@ glm::vec3 HexField::colorGradient(int depth, int max_depth, int children)
 //        return glm::vec3(children / 6.0f);
 //        return palette(scale , glm::vec3(.5f, .2f, .4f), glm::vec3(.4f, .1f, .0f), glm::vec3(1.3f, 0.5f, 0.2f), glm::vec3(.94f, .25f, .6f));
 //    return .8f * palette(scale + 1, glm::vec3(.5f), glm::vec3(.5f), glm::vec3(2.0f, 1.0f, 1.0f), glm::vec3(.5f, .20f, .25f));
-        return palette(scale, glm::vec3(.5f), glm::vec3(.5f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(.3f, .2f, .2f));
+    return palette(scale, glm::vec3(.5f), glm::vec3(.5f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(.3f, .2f, .2f));
 }
 
 void HexField::calculateNextDepth()
 {
 
+    if (depth == 0) {
+        parentNodes = {&(symmetryStructure.front())};
+    }
 //        if (depth >= max_depth) return;
 
     // Breath first loop
@@ -83,7 +88,7 @@ void HexField::calculateNextDepth()
         for (int c = 0; c < op->getChildSize(); c++)
         {
             glm::mat4 childTransform = tr * op->getChildTransform(c);
-            SymmetryOperation* childSymmetry = op->getSymmetryOperation(c);
+            SymmetryOperation *childSymmetry = op->getSymmetryOperation(c);
 
             glm::vec3 pos = childTransform * glm::vec4(0, 0, 0, 1);
             if (!grid.hasCell(pos) || grid.getCell(pos).depth >= childDepth)
@@ -106,7 +111,6 @@ void HexField::calculateNextDepth()
     depth = childDepth;
 }
 
-
 void HexField::calculateGrid()
 {
     while (depth < max_depth) calculateNextDepth();
@@ -116,3 +120,60 @@ HexMap<HexNode> HexField::getHexGrid()
 {
     return grid;
 }
+
+void HexField::addStructure(int index, const std::vector<glm::mat4>& childMatrices, const std::vector<int>& childIndices)
+{
+    if (this->symmetryStructure.size() < index + 1) {
+        this->symmetryStructure.resize(index + 1);
+    }
+
+    SymmetryOperation s = SymmetryOperation(childMatrices, getSymmetryOperations(childIndices));
+    this->symmetryStructure.at(index) = s;
+}
+
+void HexField::addStructure(int index, const std::vector<glm::mat4> &childMatrices, int allChildIndices)
+{
+    if (this->symmetryStructure.size() < index + 1) {
+        this->symmetryStructure.resize(index + 1);
+    }
+
+    std::vector<int> childIndices;
+    childIndices.resize(childMatrices.size());
+    for( int i=0; i<childIndices.size(); i++) {
+        childIndices.at(i) = allChildIndices;
+    }
+
+    SymmetryOperation s = SymmetryOperation(childMatrices, getSymmetryOperations(childIndices));
+    this->symmetryStructure.at(index) = s;
+}
+
+void HexField::addStructure(int index, const std::vector<glm::mat4> &childMatrices)
+{
+    if (this->symmetryStructure.size() < index + 1) {
+        this->symmetryStructure.resize(index + 1);
+    }
+
+    std::vector<SymmetryOperation*> childSymmetries;
+    childSymmetries.resize(childMatrices.size());
+
+    SymmetryOperation s = SymmetryOperation(childMatrices, childSymmetries);
+    this->symmetryStructure.at(index) = s;
+}
+
+std::vector<SymmetryOperation *> HexField::getSymmetryOperations(const std::vector<int>& indices)
+{
+    std::vector<SymmetryOperation*> symmetryOperationAddresses;
+
+    for (int i: indices)
+    {
+        // TODO: clean up
+        if (i + 1 > symmetryStructure.size())
+        {
+            symmetryStructure.resize(i + 1);
+        }
+        symmetryOperationAddresses.push_back(&(symmetryStructure[i]));
+    }
+
+    return symmetryOperationAddresses;
+}
+
