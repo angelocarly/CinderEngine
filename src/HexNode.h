@@ -12,6 +12,7 @@ struct HexNode
     glm::ivec3 pos;
     glm::vec3 color;
     int depth;
+    float colorValue;
 };
 
 #endif //CINDERTEST_HEXNODE_H

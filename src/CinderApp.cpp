@@ -64,6 +64,13 @@ private:
         sDir = hexToScreenMatrixPointyTop * glm::vec2(0, -1) * glm::vec2(hexRadius);
         tDir = hexToScreenMatrixPointyTop * glm::vec2(-1, 1) * glm::vec2(hexRadius);
     }
+
+    vec3 colorGradient(int depth, int max_depth, float colorvalue);
+
+    vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d);
+
+    float maxColorValue = 0.0f;
+    int maxDepth = 0;
 };
 
 
@@ -72,15 +79,33 @@ void CinderApp::setup()
     windowSize = vec2(getWindowWidth(), getWindowHeight());
 
     hexField.addStructure(
-            0,
-            GridUtils::createHexagon(glm::ivec3(2, -2, 0)),
-            1
+            GridUtils::createHexagon(glm::ivec3(3, 4, -7)),
+            {1, 1, 1, 2, 2, 2}
+    );
+//    hexField.addStructure(
+//            GridUtils::createTriangle(glm::ivec3(7, -7, 0)),
+//            {1, 2, -1}
+//    );
+    hexField.addStructure(
+            GridUtils::createTriangle(glm::ivec3(9, -9, 0)),
+            {2, 2, 1}
     );
     hexField.addStructure(
-            1,
-            GridUtils::createLine(glm::ivec3(3, -3, 0)),
-            0
+            GridUtils::createTriangle(glm::ivec3(2, -3, 1), GridUtils::rotateThirdRight()),
+            {-2, 1, 1}
     );
+    hexField.addStructure(
+             GridUtils::createTriangleUp(glm::ivec3(2, -1, -1)),
+            {0, 1, 1}
+    );
+    hexField.addStructure(
+            GridUtils::createTriangleUp(glm::ivec3(1, -1, 0)),
+            {0, 0, 0}
+    );
+//    hexField.addStructure(
+//            GridUtils::createTriangleUp(glm::ivec3(0, 1, -1), GridUtils::rotateSixthRight()),
+//            {-2, 0, 0}
+//    );
 }
 
 void prepareSettings(CinderApp::Settings *settings)
@@ -128,9 +153,28 @@ void CinderApp::keyDown(KeyEvent event)
     }
 }
 
+glm::vec3 CinderApp::palette(float t, glm::vec3 a, glm::vec3 b, glm::vec3 c, glm::vec3 d)
+{
+    return a + b * cos(glm::vec3(6.28318) * (c * t + d));
+}
+
+glm::vec3 CinderApp::colorGradient(int depth, int max_depth, float colorvalue)
+{
+    float scale = 1 - depth * depth / 200.0f;
+    if (scale < .2f) scale = .2f;
+    float in = colorvalue / 50 - .1f;
+//    spdlog::info("colorvalue: {}, in: {}", colorvalue, in);
+//    return scale * palette(in, glm::vec3(.5f, .5f, .5f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 0.5f), glm::vec3(.8f, .9f, .3f));
+    return palette(in, glm::vec3(.45f, .6f, .6f), glm::vec3(.55f, 0.4f, .4f), glm::vec3(0.4f, 0.9f, 1.0f), glm::vec3(1.0f, .6f, .1f));
+//    return (1 - scale) * palette(colorvalue, glm::vec3(.5f), glm::vec3(.5f), glm::vec3(2.0f, 1.0f, 1.0f), glm::vec3(.5f, .20f, .25f));
+//    return palette(in, glm::vec3(.5f), glm::vec3(.5f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(.3f, .2f, .2f));
+}
+
 void CinderApp::draw()
 {
-    gl::clear(Color(.02f, 0.02f, 0.05f) * 2.7f);
+
+    vec3 bgColor = colorGradient(maxDepth, 15, maxColorValue);
+    gl::clear(Color(bgColor.r, bgColor.g, bgColor.b));
 
     gl::pushModelMatrix();
     gl::translate(toWindowPos(-cameraPosition));
@@ -140,7 +184,12 @@ void CinderApp::draw()
 
         for (std::pair<glm::ivec3, HexNode> b: hexField.getHexGrid())
         {
-            glm::vec3 color = b.second.color;
+            glm::vec3 color = colorGradient(b.second.depth, 20, b.second.colorValue);
+            if (b.second.colorValue > maxColorValue) {
+                maxColorValue = b.second.colorValue;
+                maxDepth = b.second.depth;
+            }
+
             glm::ivec3 hexpos = b.second.pos;
 
             gl::color(color.r, color.g, color.b);

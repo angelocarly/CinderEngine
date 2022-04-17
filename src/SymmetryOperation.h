@@ -12,7 +12,7 @@
 
 class SymmetryOperation {
 public:
-    SymmetryOperation(const std::vector<glm::mat4>& childTransforms, const std::vector<SymmetryOperation*>& symmetryOperations)
+    SymmetryOperation(const std::vector<glm::mat4>& childTransforms, const std::vector<int>& symmetryOperations)
             : childTransforms(childTransforms), symmetryOperations(symmetryOperations) {
         if (childTransforms.size() != symmetryOperations.size()) {
             spdlog::error("Failed initializing SymmetryOperation because of mismatching size. childtransform.size: {}, symmetryOperations.size: {}",
@@ -36,7 +36,7 @@ public:
         return childTransforms.at(child);
     }
 
-    SymmetryOperation *getSymmetryOperation(int child) {
+    int getSymmetryOperation(int child) {
         if (child > getChildSize()) {
             spdlog::error("Child not found: {}", child);
             std::exit(1);
@@ -44,7 +44,7 @@ public:
         return symmetryOperations.at(child);
     }
 
-    void setChild(int child, SymmetryOperation *operation) {
+    void setChild(int child, int operation) {
         if (child > getChildSize()) {
             spdlog::error("Child not found: {}", child);
             std::exit(1);
@@ -52,7 +52,7 @@ public:
         symmetryOperations.at(child) = operation;
     }
 
-    void setAllChilds(SymmetryOperation * operation) {
+    void setAllChilds(int operation) {
         for(int i=0; i < symmetryOperations.size(); i++) {
             symmetryOperations.at(i) = operation;
         }
@@ -60,7 +60,7 @@ public:
 
 
 private:
-    std::vector<SymmetryOperation *> symmetryOperations;
+    std::vector<int> symmetryOperations;
     std::vector<glm::mat4> childTransforms;
 };
 
