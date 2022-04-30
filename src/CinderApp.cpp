@@ -3,6 +3,7 @@
 #include "cinder/gl/gl.h"
 #include "HexNode.h"
 #include "HexField.h"
+#include "cinder/Rand.h"
 #include <spdlog/spdlog.h>
 #include <stack>
 
@@ -52,6 +53,16 @@ private:
     glm::vec2 sDir = hexToScreenMatrixPointyTop * glm::vec2(0, -1) * glm::vec2(hexRadius);
     glm::vec2 tDir = hexToScreenMatrixPointyTop * glm::vec2(-1, 1) * glm::vec2(hexRadius);
 
+    gl::GlslProgRef mGlsl;
+    float colorpos = 0;
+    int colorscale = 60;
+    glm::vec3 color1 = glm::vec3(1.0f, 1.0f, 0.5f);
+    glm::vec3 color2 = glm::vec3(0.8f, 0.9f, 0.3f);
+    glm::vec3 color3 = glm::vec3(0.5f);
+    glm::vec3 color4 = glm::vec3(0.5f);
+
+    Rand r = Rand();
+
     ivec3 screenPosToHexCoord(vec2 position);
 
     void setHexSizes(int hexesOnScreen)
@@ -79,39 +90,52 @@ void CinderApp::setup()
     windowSize = vec2(getWindowWidth(), getWindowHeight());
 
     hexField.addStructure(
-            GridUtils::createHexagon(glm::ivec3(3, 4, -7)),
-            {1, 1, 1, 2, 2, 2}
+            GridUtils::createTriangle(glm::ivec3(-5, 6, -1)),
+            {1, 1, 1}
+    );
+    hexField.addStructure(
+            GridUtils::createTriangleUp(glm::ivec3(-1, 1, -0), GridUtils::rotateThirdRight()),
+            {1, 1, 1}
     );
 //    hexField.addStructure(
-//            GridUtils::createTriangle(glm::ivec3(7, -7, 0)),
-//            {1, 2, -1}
+//            GridUtils::createTriangleUp(glm::ivec3(-1, 1, -0), GridUtils::rotateSixthRight()),
+//            {1, 2, 2}
+//    );
+//    hexField.addStructure(
+//            GridUtils::createHexagon(glm::ivec3(-5, 5, -0)),
+//            {2, -1, 2, -1, -1, 2}
+//    );
+//    hexField.addStructure(
+//            GridUtils::createTriangleUp(glm::ivec3(1, 1, -2)),
+//            {0, 2, -3}
 //    );
     hexField.addStructure(
-            GridUtils::createTriangle(glm::ivec3(9, -9, 0)),
-            {2, 2, 1}
+            GridUtils::createLine(glm::ivec3(-6, -7, 13)),
+            {1, 2}
     );
     hexField.addStructure(
-            GridUtils::createTriangle(glm::ivec3(2, -3, 1), GridUtils::rotateThirdRight()),
-            {-2, 1, 1}
+            GridUtils::createTriangleUp(glm::ivec3(-4, 3, 1), GridUtils::rotateThirdRight()),
+            {-2, 1, 0}
+    );
+//    hexField.addStructure(
+//             GridUtils::createTriangleUp(glm::ivec3(2, -1, -1)),
+//            {1, 1, 1}
+//    );
+    hexField.addStructure(
+            GridUtils::createTriangleUp(glm::ivec3(2, -2, 0)),
+            {1, 1, -4}
     );
     hexField.addStructure(
-             GridUtils::createTriangleUp(glm::ivec3(2, -1, -1)),
-            {0, 1, 1}
-    );
-    hexField.addStructure(
-            GridUtils::createTriangleUp(glm::ivec3(1, -1, 0)),
+            GridUtils::createTriangleUp(glm::ivec3(1, -1, 0) ),
             {0, 0, 0}
     );
-//    hexField.addStructure(
-//            GridUtils::createTriangleUp(glm::ivec3(0, 1, -1), GridUtils::rotateSixthRight()),
-//            {-2, 0, 0}
-//    );
+
 }
 
 void prepareSettings(CinderApp::Settings *settings)
 {
     settings->setTitle("cinder");
-    settings->setWindowSize(900, 900);
+    settings->setWindowSize(1280, 1280);
     settings->setMultiTouchEnabled(false);
 }
 
@@ -147,9 +171,37 @@ void CinderApp::mouseWheel(MouseEvent event)
 
 void CinderApp::keyDown(KeyEvent event)
 {
-    if (event.getChar() == 'a')
+    if (event.getChar() == 'q')
     {
         hexField.calculateNextDepth();
+    }
+    if (event.getChar() == 'w')
+    {
+        colorpos += 0.2f / 100;
+    }
+    if (event.getChar() == 's')
+    {
+        colorpos -= 0.2f / 100;
+    }
+    if (event.getChar() == 'a')
+    {
+        colorscale += 1;
+    }
+    if (event.getChar() == 'd')
+    {
+        colorscale -= 1;
+        if (colorscale < 1) colorscale = 1;
+    }
+    if (event.getChar() == 'r')
+    {
+        colorpos = randFloat(0.0f, 2.0f);
+        color1 = glm::vec3(randFloat(0.0f, 1.0f), randFloat(0.0f, 1.0f), randFloat(0.0f, 1.0f));
+        color2 = glm::vec3(randFloat(0.0f, 1.0f), randFloat(0.0f, 1.0f), randFloat(0.0f, 1.0f));
+    }
+    if (event.getChar() == 't')
+    {
+        color3 = glm::vec3(randFloat(0.0f, 1.0f), randFloat(0.0f, 1.0f), randFloat(0.0f, 1.0f));
+        color4 = glm::vec3(randFloat(0.0f, 1.0f), randFloat(0.0f, 1.0f), randFloat(0.0f, 1.0f));
     }
 }
 
@@ -160,12 +212,17 @@ glm::vec3 CinderApp::palette(float t, glm::vec3 a, glm::vec3 b, glm::vec3 c, glm
 
 glm::vec3 CinderApp::colorGradient(int depth, int max_depth, float colorvalue)
 {
-    float scale = 1 - depth * depth / 200.0f;
+    float scale = 0.9f - depth * depth / 180.0f;
     if (scale < .2f) scale = .2f;
-    float in = colorvalue / 50 - .1f;
+    if (scale > 1.0f) scale = 1.0f;
+    float in = colorvalue / colorscale + 1.34f + colorpos;
 //    spdlog::info("colorvalue: {}, in: {}", colorvalue, in);
-//    return scale * palette(in, glm::vec3(.5f, .5f, .5f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 0.5f), glm::vec3(.8f, .9f, .3f));
-    return palette(in, glm::vec3(.45f, .6f, .6f), glm::vec3(.55f, 0.4f, .4f), glm::vec3(0.4f, 0.9f, 1.0f), glm::vec3(1.0f, .6f, .1f));
+//    return scale * palette(in, glm::vec3(.6f, .6f, .6f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 0.5f),
+//                           glm::vec3(.8f, .9f, .3f));
+//    return palette(in, glm::vec3(.45f, .6f, .6f), glm::vec3(.55f, 0.4f, .4f), glm::vec3(0.4f, 0.9f, 1.0f), glm::vec3(1.0f, .6f, .1f));
+//    return scale * palette(in, glm::vec3(.5f), glm::vec3(.5f), glm::vec3(2.0f, 1.0f, 0.0f), glm::vec3(0.5f, .2f, .25f));
+//    return scale * palette(in, glm::vec3(.5f), glm::vec3(.5f), glm::vec3(1.0f, 1.0f, 0.5f), glm::vec3(0.8f, .9f, .3f)); //nico
+    return scale * palette(in, color3, color4, color1, color2); //nico
 //    return (1 - scale) * palette(colorvalue, glm::vec3(.5f), glm::vec3(.5f), glm::vec3(2.0f, 1.0f, 1.0f), glm::vec3(.5f, .20f, .25f));
 //    return palette(in, glm::vec3(.5f), glm::vec3(.5f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(.3f, .2f, .2f));
 }
@@ -173,11 +230,12 @@ glm::vec3 CinderApp::colorGradient(int depth, int max_depth, float colorvalue)
 void CinderApp::draw()
 {
 
-    vec3 bgColor = colorGradient(maxDepth, 15, maxColorValue);
+    vec3 bgColor = .4f * colorGradient(maxDepth, 15, maxColorValue);
     gl::clear(Color(bgColor.r, bgColor.g, bgColor.b));
 
     gl::pushModelMatrix();
     gl::translate(toWindowPos(-cameraPosition));
+//    gl::rotate(-colorpos);
 
     gl::begin(GL_TRIANGLES);
     {
@@ -185,7 +243,8 @@ void CinderApp::draw()
         for (std::pair<glm::ivec3, HexNode> b: hexField.getHexGrid())
         {
             glm::vec3 color = colorGradient(b.second.depth, 20, b.second.colorValue);
-            if (b.second.colorValue > maxColorValue) {
+            if (b.second.colorValue > maxColorValue)
+            {
                 maxColorValue = b.second.colorValue;
                 maxDepth = b.second.depth;
             }
